@@ -2,18 +2,11 @@
 #include <stdlib.h>
 #include <time.h>
 
-// Função para gerar código baseado no tempo (1 minuto por código)
-int gerar_codigo_tempo(int secret, int offset)
+// Agora recebe o tempo como parâmetro
+int gerar_codigo_tempo(int secret, int timestep)
 {
-    time_t now = time(NULL);
-
-    // Divide o tempo em blocos de 60 segundos (1 minuto)
-    int timestep = (now / 60) + offset;
-
-    // Geração do código (6 dígitos)
     int code = (timestep ^ secret) % 1000000;
 
-    // Garantir que seja positivo
     if (code < 0)
         code *= -1;
 
@@ -22,20 +15,21 @@ int gerar_codigo_tempo(int secret, int offset)
 
 int main()
 {
-    int secret = 123456; // depois vamos substituir por segredo por usuário
+    int secret = 123456;
     int input;
 
-    // Gera código atual e anterior (tolerância de tempo)
-    int codigo_atual = gerar_codigo_tempo(secret, 0);
-    int codigo_anterior = gerar_codigo_tempo(secret, -1);
+    // Captura o tempo UMA VEZ só
+    time_t now = time(NULL);
+    int timestep_atual = now / 60;
 
-    // Apenas para teste (remover depois no PAM)
+    int codigo_atual = gerar_codigo_tempo(secret, timestep_atual);
+    int codigo_anterior = gerar_codigo_tempo(secret, timestep_atual - 1);
+
     printf("Codigo atual (debug): %06d\n", codigo_atual);
 
     printf("Digite o codigo: ");
     scanf("%d", &input);
 
-    // Validação
     if (input == codigo_atual || input == codigo_anterior)
     {
         printf("Acesso liberado!\n");
@@ -46,4 +40,5 @@ int main()
     }
 
     return 0;
+}
 }
