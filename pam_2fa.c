@@ -56,10 +56,13 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 
     int codigo = gerar_codigo(secret, timestep);
 
-    char *input;
-    pam_prompt(pamh, PAM_PROMPT_ECHO_ON, &input, "Codigo 2FA: ");
+    const char *input;
+pam_get_authtok(pamh, PAM_AUTHTOK, &input, "Codigo 2FA: ");
 
-    int user_code = atoi(input);
+if (input == NULL)
+    return PAM_AUTH_ERR;
+
+int user_code = atoi(input);
 
     if (user_code == codigo)
         return PAM_SUCCESS;
