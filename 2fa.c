@@ -21,10 +21,10 @@ int main()
     int timestep = now / 60;
 
     int codigo_atual = gerar_codigo(secret, timestep);
-    int codigo_anterior = gerar_codigo(secret, timestep - 1);
+    //int codigo_anterior = gerar_codigo(secret, timestep - 1);
 
     printf("Codigo atual: %06d\n", codigo_atual);
-    printf("Codigo anterior: %06d\n", codigo_anterior);
+    //printf("Codigo anterior: %06d\n", codigo_anterior);
 
     return 0;
 }
