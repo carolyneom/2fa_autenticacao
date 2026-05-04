@@ -15,8 +15,7 @@ int gerar_codigo(int secret, int timestep)
 
 int main()
 {
-    int secret = 123456;
-    int input;
+    int secret = 678901; // use o mesmo do usuário que está testando
 
     time_t now = time(NULL);
     int timestep = now / 60;
@@ -25,14 +24,7 @@ int main()
     int codigo_anterior = gerar_codigo(secret, timestep - 1);
 
     printf("Codigo atual: %06d\n", codigo_atual);
-
-    printf("Digite o codigo: ");
-    scanf("%d", &input);
-
-    if (input == codigo_atual || input == codigo_anterior)
-        printf("Acesso liberado!\n");
-    else
-        printf("Codigo incorreto!\n");
+    printf("Codigo anterior: %06d\n", codigo_anterior);
 
     return 0;
 }
