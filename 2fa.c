@@ -15,7 +15,7 @@ int gerar_codigo(int secret, int timestep)
 
 int main()
 {
-    int secret = 678901; // use o mesmo do usuário que está testando
+    int secret = 678901, 109876, 123456, 654321; // usuário teste
 
     time_t now = time(NULL);
     int timestep = now / 60;
