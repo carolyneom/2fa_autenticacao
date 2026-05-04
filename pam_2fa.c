@@ -1,10 +1,12 @@
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
+#include <security/pam_appl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+// Gera código baseado no tempo
 int gerar_codigo(int secret, int timestep)
 {
     long long mix = (long long)timestep * 1103515245 + secret;
@@ -16,6 +18,7 @@ int gerar_codigo(int secret, int timestep)
     return code;
 }
 
+// Busca secret do usuário
 int buscar_secret(const char *usuario)
 {
     FILE *file = fopen("/etc/security/2fa_secrets.conf", "r");
@@ -28,12 +31,13 @@ int buscar_secret(const char *usuario)
 
     while (fgets(linha, sizeof(linha), file))
     {
-        sscanf(linha, "%[^:]:%d", user, &secret);
-
-        if (strcmp(user, usuario) == 0)
+        if (sscanf(linha, "%[^:]:%d", user, &secret) == 2)
         {
-            fclose(file);
-            return secret;
+            if (strcmp(user, usuario) == 0)
+            {
+                fclose(file);
+                return secret;
+            }
         }
     }
 
@@ -41,10 +45,43 @@ int buscar_secret(const char *usuario)
     return -1;
 }
 
+// Função para pedir input corretamente via PAM
+int pedir_codigo(pam_handle_t *pamh, const char *msg, char *resp, int tam)
+{
+    struct pam_conv *conv;
+    struct pam_message msgp;
+    const struct pam_message *msgpp;
+    struct pam_response *response = NULL;
+
+    if (pam_get_item(pamh, PAM_CONV, (const void **)&conv) != PAM_SUCCESS)
+        return PAM_AUTH_ERR;
+
+    msgp.msg_style = PAM_PROMPT_ECHO_ON;
+    msgp.msg = msg;
+    msgpp = &msgp;
+
+    if (conv->conv(1, &msgpp, &response, conv->appdata_ptr) != PAM_SUCCESS)
+        return PAM_AUTH_ERR;
+
+    if (response == NULL || response->resp == NULL)
+        return PAM_AUTH_ERR;
+
+    strncpy(resp, response->resp, tam - 1);
+    resp[tam - 1] = '\0';
+
+    free(response->resp);
+    free(response);
+
+    return PAM_SUCCESS;
+}
+
+// Função principal do PAM
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     const char *usuario;
-    pam_get_user(pamh, &usuario, NULL);
+
+    if (pam_get_user(pamh, &usuario, NULL) != PAM_SUCCESS)
+        return PAM_AUTH_ERR;
 
     int secret = buscar_secret(usuario);
 
@@ -54,22 +91,23 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
     time_t now = time(NULL);
     int timestep = now / 60;
 
-    int codigo = gerar_codigo(secret, timestep);
+    int codigo_atual = gerar_codigo(secret, timestep);
+    int codigo_anterior = gerar_codigo(secret, timestep - 1);
 
-    const char *input;
-pam_get_authtok(pamh, PAM_AUTHTOK, &input, "Codigo 2FA: ");
+    char input[20];
 
-if (input == NULL)
-    return PAM_AUTH_ERR;
+    if (pedir_codigo(pamh, "Codigo 2FA: ", input, sizeof(input)) != PAM_SUCCESS)
+        return PAM_AUTH_ERR;
 
-int user_code = atoi(input);
+    int user_code = atoi(input);
 
-    if (user_code == codigo)
+    if (user_code == codigo_atual || user_code == codigo_anterior)
         return PAM_SUCCESS;
 
     return PAM_AUTH_ERR;
 }
 
+// Necessário para PAM
 PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     return PAM_SUCCESS;
