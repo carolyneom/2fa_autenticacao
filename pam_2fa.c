@@ -4,21 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
-// Gera código baseado no tempo
-int gerar_codigo(int secret, int timestep)
-{
-    long long mix = (long long)timestep * 1103515245 + secret;
-    int code = mix % 1000000;
-
-    if (code < 0)
-        code *= -1;
-
-    return code;
-}
-
-// Busca secret do usuário
+// Busca secret do usuário (mantido, mesmo não usando agora)
 int buscar_secret(const char *usuario)
 {
     FILE *file = fopen("/etc/security/2fa_secrets.conf", "r");
@@ -45,7 +32,7 @@ int buscar_secret(const char *usuario)
     return -1;
 }
 
-// Função para pedir input corretamente via PAM
+// Função para pedir input via PAM
 int pedir_codigo(pam_handle_t *pamh, const char *msg, char *resp, int tam)
 {
     struct pam_conv *conv;
@@ -83,16 +70,11 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
     if (pam_get_user(pamh, &usuario, NULL) != PAM_SUCCESS)
         return PAM_AUTH_ERR;
 
+    // Ainda verifica se usuário existe no arquivo
     int secret = buscar_secret(usuario);
 
     if (secret == -1)
         return PAM_AUTH_ERR;
-
-    time_t now = time(NULL);
-    int timestep = now / 60;
-
-    int codigo_atual = gerar_codigo(secret, timestep);
-    int codigo_anterior = gerar_codigo(secret, timestep - 1);
 
     char input[20];
 
@@ -101,7 +83,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 
     int user_code = atoi(input);
 
-    if (user_code == codigo_atual || user_code == codigo_anterior)
+    //  CÓDIGO FIXO TEMPORÁRIO
+    if (user_code == 123456)
         return PAM_SUCCESS;
 
     return PAM_AUTH_ERR;
