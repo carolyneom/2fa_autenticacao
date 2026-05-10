@@ -1,0 +1,27 @@
+import smtplib
+from email.mime.text import MIMEText
+import sys
+
+# argumentos
+destino = sys.argv[1]
+codigo = sys.argv[2]
+
+# configura email
+msg = MIMEText(f"Seu codigo 2FA é: {codigo}")
+msg['Subject'] = 'Codigo 2FA'
+msg['From'] = 'carolyneoliv12@gmail.com'
+msg['To'] = destino
+
+# conecta ao gmail
+server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+
+# login
+server.login('carolyneoliv12@gmail.com', 'kbje zysh eisd ibye')
+
+# envia
+server.send_message(msg)
+
+# fecha
+server.quit()
+
+print("Email enviado com sucesso!")
