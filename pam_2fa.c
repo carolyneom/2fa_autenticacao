@@ -99,11 +99,15 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
     if (pedir_codigo(pamh, "Codigo 2FA: ", input, sizeof(input)) != PAM_SUCCESS)
         return PAM_AUTH_ERR;
 
-    int user_code = atoi(input);
+    char codigo_str[7];
+    char codigo_ant_str[7];
 
-    if (user_code == codigo_atual || user_code == codigo_anterior)
-        return PAM_SUCCESS;
+    snprintf(codigo_str, sizeof(codigo_str), "%06d", codigo_atual);
+    snprintf(codigo_ant_str, sizeof(codigo_ant_str), "%06d", codigo_anterior);
 
+    if (strcmp(input, codigo_str) == 0 || strcmp(input, codigo_ant_str) == 0)
+    return PAM_SUCCESS;
+    
     return PAM_AUTH_ERR;
 }
 
