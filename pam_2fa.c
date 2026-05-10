@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 
-// Gera código baseado no tempo
+// Gera código baseado no tempo.
 int gerar_codigo(int secret, int timestep)
 {
     long long mix = (long long)timestep * 1103515245 + secret;
